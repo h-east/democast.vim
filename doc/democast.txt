@@ -1,0 +1,132 @@
+*democast.txt*	Record a Vim session as a GIF, with the keys drawn on it
+
+		    DEMOCAST - a Vim session, recorded
+
+1. Introduction		|democast-introduction|
+2. Requirements		|democast-requirements|
+3. Recording		|democast-recording|
+4. What it plays	|democast-steps|
+5. Configuration	|democast-configuration|
+6. How it works		|democast-how|
+
+==============================================================================
+1. Introduction					*democast-introduction*
+
+A demo of an editor is worth more as a picture than as a description, and a
+picture of Vim is worth little if the keys that made it happen are not in it.
+This plays a session you have written down, records it, and draws each key
+over the GIF as it goes in.
+
+The session is played from inside Vim, by a timer, which is what lets it wait
+for something slow: a language server answering, a plugin drawing a popup.
+A tool that types at a terminal from the outside cannot know when that has
+happened.
+
+==============================================================================
+2. Requirements					*democast-requirements*
+
+- Vim 9.1 or later, compiled with |+timers| and |+eval|
+- asciinema 3, to record the terminal
+- agg, to turn the recording into a GIF
+- ffmpeg with the drawtext filter, to draw the keys over it
+
+==============================================================================
+3. Recording					*democast-recording*
+
+Write what to play in ~/.democast.vim, then: >
+
+	~/.vim/plugged/democast.vim/bin/democast
+<
+It leaves the GIF in ~/democast.gif.  Another file can be named as the one
+argument.  These say where the pieces go, when they are set:
+
+	DEMOCAST_VIM		which Vim to record (default: "vim")
+	DEMOCAST_OUT		where the GIF goes
+	DEMOCAST_CAST		where the recording goes
+	DEMOCAST_LABELS		where the key times go
+	DEMOCAST_FONT_SIZE	how large the recording is rendered
+
+|:DemocastPlay| plays the session in the current Vim, without recording it,
+which is the way to see whether it does what you meant before recording it.
+
+==============================================================================
+4. What it plays					*democast-steps*
+
+"steps" in |g:democast| is a List of steps, each of them a List of four:
+
+	[{kind}, {keys}, {label}, {wait}]
+
+{kind} is one of:
+
+	"keys"	Send {keys} as they are, all at once.  A mapping of more
+		than one key, "gd" among them, has to go this way: it does
+		not answer to its keys arriving apart.
+	"type"	Send {keys} a character at a time, 100ms apart, as a hand
+		would.  The label grows with the text.
+	"slow"	The same, 400ms apart, for where something is worth
+		watching happen: a completion menu narrowing, say.
+	"cmd"	Run {keys} as an Ex command, without it being seen.  For
+		what the demo needs but nobody would type.
+
+{label} is what is drawn over the GIF while the step lasts.  An empty one
+draws nothing.  A "type" or "slow" step names itself, so leave it empty.  The
+label "↩" is written out as the line it ends, so the <CR> after a command
+reads ":LspReferences↩" rather than an arrow on its own.
+
+{wait} is how long to hold after the step, in milliseconds.  It is what gives
+an answer time to arrive and the eye time to read it.
+
+==============================================================================
+5. Configuration				*democast-configuration*
+							*g:democast*
+A Dictionary, read both by the recording script, to learn what to open, and
+by Vim, to learn what to do: >vim9
+
+	g:democast = {
+	  dir: expand('~/src/hello'),
+	  file: 'main.c',
+	  steps: [
+	    ['keys', '', '', 1500],
+	    ['type', '/main', '', 400],
+	    ['keys', "\<CR>", '↩', 1000],
+	    ['keys', 'K', 'K', 2500],
+	  ],
+	}
+<
+	dir		Where to run, and where "file" is looked for.
+			Default: the current directory
+	file		The file to open.  Required.
+	steps		What to play; see |democast-steps|.  Required.
+	before		A List of Ex commands to run before playing, for
+			what the demo needs of the setup.
+			Default: an empty List
+	start_delay	How long to wait before the first step, in
+			milliseconds.  Default: 600
+	labels		Where the key times are written.
+			Default: "~/democast-labels.tsv"
+
+The file is read as a Vim script, after your |vimrc|, so anything else you
+want set for the demo can go in it as well.
+
+						*:DemocastPlay*
+:DemocastPlay	Play what |g:democast| says, then quit.  Whatever is being
+		edited is left as it is: the demo is thrown away.
+
+==============================================================================
+6. How it works					*democast-how*
+
+Each step is fed with |feedkeys()| from a |timer|, not from the body of a
+script: a script does not read the typeahead while it runs, so Insert mode
+would end at every step and a completion menu would never be on screen.
+
+The times each label goes up and comes down are written as they are measured,
+so changing a wait needs nothing else changed.  They are measured from the
+moment the demo starts, which is a little after the recording does; to line
+the two up, a mark the terminal ignores is written at the start and looked
+for in the recording.
+
+The cursor in the GIF is drawn by agg, which inverts the colors of the cell
+it is on.  Neither the color your terminal draws the cursor in nor the one
+'guicursor' names reaches the recording, so it will not match what you see.
+
+ vim:tw=78:ts=8:noet:ft=help:norl:

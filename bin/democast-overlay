@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""Draw the key labels over the GIF, from the times the demo logged.
+
+    democast-overlay in.gif labels.tsv recording.cast out.gif
+
+Each line of the TSV is "start<TAB>end<TAB>label", timed from the moment the
+demo started playing.  The recording starts a little before that, by however
+long Vim took to come up, so the demo writes a mark the terminal ignores and
+this looks up when that mark was recorded.
+"""
+import json
+import subprocess
+import sys
+
+FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
+SIZE = 34
+MARK = "DEMOCAST"
+# A frame is placed a shade before the moment it stands for, so each label
+# starts a shade early to be sure of landing on it.
+LEAD = 0.15
+
+
+def mark_time(cast):
+    """When the demo started, in the recording's own time."""
+    at = 0.0
+    with open(cast) as f:
+        f.readline()			# the header
+        for line in f:
+            line = line.strip()
+            if not line.startswith("["):
+                continue
+            event = json.loads(line)
+            at += event[0]		# v3 events are one interval each
+            if MARK in event[2]:
+                return at
+    sys.exit("the {} mark is not in {}".format(MARK, cast))
+
+
+def escape(text):
+    # What drawtext reads as its own: the backslash, the colon, the quote.
+    # The percent needs no escape: expansion is turned off below.
+    for char in ("\\", ":", "'"):
+        text = text.replace(char, "\\" + char)
+    return text
+
+
+def main():
+    if len(sys.argv) != 5:
+        sys.exit(__doc__)
+    src, tsv, cast, dst = sys.argv[1:]
+    offset = mark_time(cast)
+
+    draws = []
+    for line in open(tsv):
+        start, end, label = line.rstrip("\n").split("\t")
+        if not label:
+            continue
+        draws.append(
+            "drawtext=fontfile={font}:text='{text}':expansion=none"
+            ":fontsize={size}"
+            ":fontcolor=white:box=1:boxcolor=0x1f6feb@0.85:boxborderw=14"
+            ":x=(w-text_w)/2:y=h-text_h-40"
+            ":enable='between(t,{start},{end})'".format(
+                font=FONT,
+                text=escape(label),
+                size=SIZE,
+                start=max(0.0, float(start) + offset - LEAD),
+                end=float(end) + offset,
+            )
+        )
+
+    # One palette for the whole GIF, so the colors do not shift frame to
+    # frame.
+    filters = (
+        "[0:v]{chain},split[a][b];"
+        "[a]palettegen=stats_mode=diff[p];"
+        "[b][p]paletteuse=dither=bayer:bayer_scale=3".format(
+            chain=",".join(draws))
+    )
+
+    subprocess.run(
+        ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+         "-i", src, "-filter_complex", filters, "-loop", "0", dst],
+        check=True,
+    )
+
+
+main()

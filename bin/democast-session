@@ -1,0 +1,37 @@
+#!/bin/sh
+# What is recorded: a prompt, the command typed out, and the demo playing.
+# Run by "democast"; not meant to be called by hand.
+
+conf=${DEMOCAST_CONF:?}
+vim=${DEMOCAST_VIM:-vim}
+root=$(cd "$(dirname "$0")/.." && pwd)
+
+# What to open and where, read from the same file the demo is written in.
+# Through a file rather than the output: -es prints more than the answer.
+meta=$(mktemp)
+trap 'rm -f "$meta"' EXIT
+ask="call writefile([get(g:democast,'dir','.'),get(g:democast,'file','')],'$meta')"
+"$vim" -es --not-a-term -u NONE -S "$conf" -c "$ask" -c qa >/dev/null 2>&1 || true
+dir=$(sed -n 1p "$meta")
+file=$(sed -n 2p "$meta")
+[ -n "$file" ] || { echo "democast: g:democast.file is not set" >&2; exit 1; }
+
+type_out() {
+    s=$1
+    while [ -n "$s" ]; do
+	printf '%s' "${s%"${s#?}"}"
+	s=${s#?}
+	sleep 0.09
+    done
+}
+
+cd "$dir" || exit 1
+
+clear
+printf '\033[1;32m$\033[0m '
+type_out "vim $file"
+printf '\n'
+sleep 0.5
+
+exec "$vim" -n --cmd "set runtimepath^=$root" -S "$conf" \
+    -c DemocastPlay "$file"
