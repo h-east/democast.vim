@@ -104,3 +104,9 @@ export def Play()
   started = reltime()
   timer_start(Setting('start_delay', 600), Next)
 enddef
+
+# Compiling every function is only for the syntax check: the point of an
+# autoload script is that it is not compiled until it is used.
+if $DEMOCAST_COMPILE_CHECK != ''
+  defcompile
+endif

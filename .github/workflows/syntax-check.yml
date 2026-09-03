@@ -1,0 +1,47 @@
+name: Syntax check
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  syntax-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Vim
+        run: |
+          if ! command -v vim >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends vim
+          fi
+
+      - name: Compile the Vim9 scripts
+        env:
+          DEMOCAST_COMPILE_CHECK: 1
+        run: |
+          # A compile error is a message, not an exception, so it is read back
+          # from the redirected output rather than caught.
+          vim --clean -es \
+            -c 'redir! > messages.txt' \
+            -c 'source plugin/democast.vim' \
+            -c 'source autoload/democast.vim' \
+            -c 'redir END' \
+            -c 'qa!' < /dev/null || true
+          if [ -s messages.txt ]; then
+            cat messages.txt >&2
+            exit 1
+          fi
+
+      - name: Check the shell scripts
+        run: |
+          for script in bin/democast bin/democast-session; do
+            sh -n "$script"
+          done
+
+      - name: Check the Python script
+        run: python3 -m py_compile bin/democast-overlay
