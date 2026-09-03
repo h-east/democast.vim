@@ -54,7 +54,7 @@ var log: list<string> = []
 
 def Next(_: number)
   if step >= len(play)
-    # The recording script says where they go; a run by hand falls back.
+    # The recording script names where they go; a run by hand falls back.
     var where = $DEMOCAST_LABELS
     if where->empty()
       where = Setting('labels', 'democast-labels.tsv')
@@ -76,7 +76,7 @@ def Next(_: number)
   timer_start(wait, Next)
 enddef
 
-# Play what "steps" in g:democast says, then leave.
+# Play the steps in g:democast, then leave.
 export def Play()
   var steps = Setting('steps', [])
   if steps->empty()
