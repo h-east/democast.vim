@@ -6,6 +6,8 @@ vim9script
 # not read the typeahead while it runs, so Insert mode would end at every step
 # and a completion menu would never be on screen.
 
+const VERSION = '1.0.000'
+
 # How long between the characters of something that is typed out, in ms.
 const TYPE_MS = 100
 const SLOW_MS = 400
