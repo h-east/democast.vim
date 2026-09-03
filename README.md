@@ -1,5 +1,9 @@
 # democast.vim
 
+[![Syntax check](https://github.com/h-east/democast.vim/actions/workflows/syntax-check.yml/badge.svg)](https://github.com/h-east/democast.vim/actions/workflows/syntax-check.yml)
+[![Update doc/tags](https://github.com/h-east/democast.vim/actions/workflows/update-doc-tags.yml/badge.svg)](https://github.com/h-east/democast.vim/actions/workflows/update-doc-tags.yml)
+[![Vim 9.1+](https://img.shields.io/badge/Vim-9.1%2B-015b01?logo=vim&logoColor=white)](#requirements)
+
 Record a Vim session as a GIF, with the keys drawn on it.
 
 A demo of an editor is worth more as a picture than as a description, and a
@@ -11,6 +15,10 @@ The session is played from inside Vim, by a timer, which is what lets it wait
 for something slow: a language server answering, a plugin drawing a popup.  A
 tool that types at a terminal from the outside cannot know when that has
 happened.
+
+## Made with it
+
+- [lsp.vim](https://github.com/h-east/lsp.vim): the GIF at the top of its README
 
 ## Requirements
 
