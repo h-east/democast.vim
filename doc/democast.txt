@@ -33,12 +33,16 @@ happened.
 ==============================================================================
 3. Recording					*democast-recording*
 
-Write what to play in ~/.democast.vim, then: >
+Recording has to start outside Vim: asciinema is what runs Vim, so it cannot
+be done from within the session being recorded.  Put the plugin's "bin" on
+your $PATH, then write what to play in democast.vim and run it
+from beside that file: >
 
-	~/.vim/plugged/democast.vim/bin/democast
+	democast
 <
-It leaves the GIF in ~/democast.gif.  Another file can be named as the one
-argument.  These say where the pieces go, when they are set:
+It reads democast.vim in the current directory, or the file named as the one
+argument, and leaves democast.gif beside it.  These say where the pieces
+go, when they are set:
 
 	DEMOCAST_VIM		which Vim to record (default: "vim")
 	DEMOCAST_OUT		where the GIF goes
@@ -102,8 +106,9 @@ by Vim, to learn what to do: >vim9
 			Default: an empty List
 	start_delay	How long to wait before the first step, in
 			milliseconds.  Default: 600
-	labels		Where the key times are written.
-			Default: "~/democast-labels.tsv"
+	labels		Where the key times are written.  What the
+			recording script says wins over this.
+			Default: "democast-labels.tsv"
 
 The file is read as a Vim script, after your |vimrc|, so anything else you
 want set for the demo can go in it as well.

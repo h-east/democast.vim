@@ -54,7 +54,12 @@ var log: list<string> = []
 
 def Next(_: number)
   if step >= len(play)
-    writefile(log, Setting('labels', expand('~/democast-labels.tsv')))
+    # The recording script says where they go; a run by hand falls back.
+    var where = $DEMOCAST_LABELS
+    if where->empty()
+      where = Setting('labels', 'democast-labels.tsv')
+    endif
+    writefile(log, where)
     execute 'qa!'
     return
   endif
@@ -85,6 +90,9 @@ export def Play()
   # A jump to another file while this one is changed needs somewhere to put
   # it; the demo is thrown away at the end either way.
   set hidden
+  # The top, wherever the file was last left, so a demo plays the same way
+  # every time.
+  cursor(1, 1)
   for line in Setting('before', [])
     execute line
   endfor

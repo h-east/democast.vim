@@ -29,7 +29,7 @@ Plug 'h-east/democast.vim'
 
 ## Writing a demo
 
-Put what to play in `~/.democast.vim`:
+Put what to play in `democast.vim`, next to the project it is about:
 
 ```vim
 vim9script
@@ -70,12 +70,22 @@ to see whether it does what you meant.
 
 ## Recording
 
-```
-~/.vim/plugged/democast.vim/bin/democast
+Recording has to start outside Vim: asciinema is what runs Vim, so it cannot
+be done from within the session being recorded.  Put the `bin` directory on
+your `PATH`:
+
+```sh
+export PATH="$HOME/.vim/plugged/democast.vim/bin:$PATH"
 ```
 
-The GIF is left in `~/democast.gif`.  `DEMOCAST_VIM` names which Vim to
-record, `DEMOCAST_OUT` where the GIF goes.
+Then:
+
+```
+democast
+```
+
+The GIF is left as `democast.gif` in the same directory.  `DEMOCAST_VIM`
+names which Vim to record, `DEMOCAST_OUT` where the GIF goes.
 
 Every key that can go in `g:democast`, and the rest of it, is under
 `:help democast`.

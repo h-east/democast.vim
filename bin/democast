@@ -4,18 +4,17 @@
 #   democast [vimrc]
 #
 # The vimrc names the file to open and what to do to it, in g:democast; see
-# the plugin's documentation.  Without one, ~/.democast.vim is read.
+# the plugin's documentation.  Without one, democast.vim here is read.
 #
 # Needs asciinema, agg and ffmpeg on $PATH.
 
 set -e
 
 here=$(cd "$(dirname "$0")" && pwd)
-conf=${1:-$HOME/.democast.vim}
-out=${DEMOCAST_OUT:-$HOME/democast.gif}
-cast=${DEMOCAST_CAST:-$HOME/democast.cast}
-labels=${DEMOCAST_LABELS:-$HOME/democast-labels.tsv}
-raw=$cast.gif
+conf=${1:-democast.vim}
+out=${DEMOCAST_OUT:-democast.gif}
+cast=${DEMOCAST_CAST:-democast.cast}
+labels=${DEMOCAST_LABELS:-democast-labels.tsv}
 size=${DEMOCAST_FONT_SIZE:-20}
 
 for tool in asciinema agg ffmpeg; do
@@ -25,6 +24,16 @@ for tool in asciinema agg ffmpeg; do
     }
 done
 [ -r "$conf" ] || { echo "democast: cannot read $conf" >&2; exit 1; }
+# The session moves to what "dir" names, so the path has to hold from there.
+conf=$(cd "$(dirname "$conf")" && pwd)/$(basename "$conf")
+for var in out cast labels; do
+    eval "v=\$$var"
+    case $v in
+	/*) ;;
+	*) eval "$var=\$PWD/\$v" ;;
+    esac
+done
+raw=$cast.gif
 
 rm -f "$cast" "$raw" "$out" "$labels"
 DEMOCAST_CONF=$conf DEMOCAST_LABELS=$labels \
